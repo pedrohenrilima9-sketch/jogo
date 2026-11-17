@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leilão ao vivo & Mata-Mata</title>
+<link rel="stylesheet" href="leilao.css">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="script_jogadores.js"></script>
+<script src="leilao.js" defer></script>
+</head>
+<body>
+<header>
+  <a href="index.html">⚽ LEILÃO DE FUTEBOL</a>
+  <span id="roomLabel">Sala</span>
+</header>
+
+<main>
+  <!-- PARTE SUPERIOR: LEILÃO -->
+  <section class="top">
+    <div>
+      <small>LEILÃO AO VIVO</small>
+      <h1>Dispute os craques</h1>
+      <p id="conexao">Conectando...</p>
+    </div>
+    <div class="saldo">
+      <small>SEU ORÇAMENTO</small>
+      <strong id="saldo">€ 500.000.000</strong>
+    </div>
+  </section>
+
+  <section id="areaLeilao" class="layout">
+    <article class="jogador-atual">
+      <div class="etiqueta">JOGADOR EM LEILÃO</div>
+      <div class="avatar" id="avatar">⚽</div>
+      <h2 id="nomeJogador">Aguardando início do leilão...</h2>
+      <p id="dadosJogador">O anfitrião iniciará a disputa.</p>
+
+      <div class="lance">
+        <small>MAIOR LANCE</small>
+        <strong id="maiorLance">€ 0</strong>
+        <span id="maiorLicitante">Nenhum lance ainda (Começa em € 0)</span>
+      </div>
+
+      <div class="timer" id="timer">--</div>
+
+      <div class="acoes-personalizadas">
+        <p class="instrucao-lance">Digite seu lance ou adicione valores:</p>
+        <div class="botoes-rapidos">
+          <button class="btn-rapido" onclick="adicionarLance(1000000)">+ € 1M</button>
+          <button class="btn-rapido" onclick="adicionarLance(5000000)">+ € 5M</button>
+          <button class="btn-rapido" onclick="adicionarLance(10000000)">+ € 10M</button>
+          <button class="btn-rapido" onclick="adicionarLance(25000000)">+ € 25M</button>
+        </div>
+        <div class="grupo-input-lance">
+          <input type="number" id="valorLanceInput" min="1" step="1000000" placeholder="Ex: 15000000">
+          <button id="darLanceCustom" disabled>Dar Lance</button>
+        </div>
+      </div>
+
+      <div class="acoes" style="margin-top: 15px;">
+        <button id="passar" class="secundario" disabled>Passar</button>
+      </div>
+      <p id="mensagem" class="mensagem"></p>
+      <div id="areaBotaoIniciar"></div>
+    </article>
+
+    <aside>
+      <h2>Participantes (Leilão Humano)</h2>
+      <ul id="participantes"></ul>
+
+      <div id="areaControleAnfitriao" class="escondido" style="margin-top:20px; border-top:1px solid #183b5d; padding-top:15px;">
+        <h2 style="font-size:16px; margin-bottom:10px;">Painel do Anfitrião</h2>
+        <button id="botaoPausaGlobal" style="width:100%; background:linear-gradient(90deg,#ff8800,#ffaa00); color:#050d1a; font-weight:bold; padding:12px; border-radius:8px;">⏸️ Pausar Leilão (Organizar Time)</button>
+      </div>
+
+      <h2 class="subtitulo">Histórico recente</h2>
+      <ul id="historico"></ul>
+    </aside>
+  </section>
+
+  <!-- PAUSA GLOBAL MODAL (CAMPO DE ESCALAÇÃO COMPLETO PARA EDITAR NA PAUSA) -->
+  <div class="modal" id="modalPausaGlobal">
+    <div class="modal-conteudo-largo">
+      <div class="topo-modal-pausa">
+        <div>
+          <span class="etiqueta" style="background:#ff8800; color:#050d1a;">⏸️ LEILÃO PAUSADO PELO ANFRITRIÃO</span>
+          <h2 style="color:#ffaa00; margin-top:8px;">Organize sua Escalação, Banco e Overall</h2>
+          <p class="pos-modal">Arraste/clique nos jogadores do banco para escalar nas posições, mude a formação e ajuste seu time. Suas alterações são salvas automaticamente!</p>
+        </div>
+        <div class="stat-box-topo">
+          <small>Média de Overall</small>
+          <strong id="mediaOverallModal">0.0</strong>
+          <small style="margin-top:4px; color:#b8cce0;">Titulares: <span id="titularesModalCount">0 / 11</span></small>
+        </div>
+      </div>
+
+      <div class="controles-formacao" style="margin-bottom: 15px;">
+        <label for="formacaoModal" style="color:#27aaff; font-weight:bold;">Formação:</label>
+        <select id="formacaoModal">
+          <option value="4-3-3">4-3-3</option>
+          <option value="4-2-3-1">4-2-3-1</option>
+          <option value="4-4-2">4-4-2</option>
+          <option value="3-5-2">3-5-2</option>
+          <option value="3-4-3">3-4-3</option>
+        </select>
+      </div>
+
+      <div class="escalacao-grid">
+        <div class="campo">
+          <div class="linha-meio"></div>
+          <div class="circulo-meio"></div>
+          <div class="area area-superior"></div>
+          <div class="area area-inferior"></div>
+          <div id="campoJogadoresModal"></div>
+        </div>
+
+        <div class="banco-box">
+          <h3>Jogadores contratados (Banco / Reserva)</h3>
+          <p class="nota-banco">Clique em um jogador do banco para escalar na vaga desejada.</p>
+          <div id="listaBancoModal" class="lista-banco"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px; text-align:center;" id="areaBotaoRetomar"></div>
+    </div>
+  </div>
+
+  <!-- RESULTADOS DO MATA-MATA (OITAVAS ATÉ A FINAL) -->
+  <section id="resultados" class="resultados escondido">
+    <h2>🏆 TORNEIO MATA-MATA (OITAVAS À FINAL)</h2>
+    <p class="sub-resultados">Simulação baseada na <strong>Média de Overall</strong>, sintonia de <strong>Perna Boa</strong> e um toque de <strong>Fator Aleatório (Sorte)</strong>:</p>
+    <div id="bracketContainer" class="bracket-container"></div>
+    <button onclick="location.href='Sala.html'" style="margin-top:20px">Voltar às salas</button>
+  </section>
+</main>
+
+<!-- MODAIS AUXILIARES PARA ESCOLHA -->
+<div class="modal" id="modalJogadores">
+  <div class="modal-conteudo">
+    <button class="fechar" id="fecharModal">×</button>
+    <h2>Escolher jogador para a vaga</h2>
+    <p id="posicaoSelecionada" class="pos-modal"></p>
+    <div id="opcoesJogadores"></div>
+  </div>
+</div>
+
+<div class="modal" id="modalPosicoes">
+  <div class="modal-conteudo">
+    <button class="fechar" id="fecharModalPos">×</button>
+    <h2>Onde escalar este jogador?</h2>
+    <p id="jogadorParaEscalar" class="pos-modal"></p>
+    <div id="opcoesPosicoes"></div>
+  </div>
+</div>
+
+</body>
+</html>
